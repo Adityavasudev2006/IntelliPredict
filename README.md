@@ -114,8 +114,10 @@ pip install -r requirements.txt
 
 # Run the Flask App
 python app.py
+```
 
 ### AWS Deployment (CloudFormation)
+
 1. Upload `model.pkl` and `app.zip` to your S3 bucket.
 2. Navigate to the **AWS CloudFormation** console.
 3. Click **Create Stack** -> Upload `infrastructure.yaml` (provided in this repo).
@@ -123,7 +125,7 @@ python app.py
 5. Access the Load Balancer DNS / Public IP provided in the outputs.
 
 ## 📊 Outcomes
-* ✅ **Reduced Deployment Time:** From hours to minutes using CloudFormation.
-* ✅ **99.9% Uptime:** Achieved via Auto Scaling and managed RDS services.
-* ✅ **Secure Pipeline:** Zero hardcoded credentials; full HTTPS encryption.
-```
+
+- ✅ **Reduced Deployment Time:** From hours to minutes using CloudFormation.
+- ✅ **99.9% Uptime:** Achieved via Auto Scaling and managed RDS services.
+- ✅ **Secure Pipeline:** Zero hardcoded credentials; full HTTPS encryption.
