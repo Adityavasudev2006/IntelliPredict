@@ -25,12 +25,11 @@ Unlike simple local scripts, this project demonstrates a **production-grade clou
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ System Architecture (Cloud Architecture)
 
 The system follows a 3-tier web architecture (Presentation, Logic, Data) fully hosted on the AWS Cloud.
 
-![System Architecture](https://github.com/username/repo-name/blob/main/path-to-your-architecture-image.png?raw=true)
-_(Note: Upload the architecture diagram from Slide 4 here)_
+![System Architecture](images/Cloud%20Architecture.png)
 
 ### 🔄 The Workflow
 
