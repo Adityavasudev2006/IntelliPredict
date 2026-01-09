@@ -1,0 +1,6 @@
+flask
+boto3
+psycopg2-binary
+joblib
+scikit-learn
+gunicorn

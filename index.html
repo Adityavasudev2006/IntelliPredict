@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Advanced Breast Cancer Predictor</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap");
+      @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");
+
+      :root {
+        --background-dark: #0a0a1a;
+        --primary-dark: #10102b;
+        --secondary-dark: #060610;
+        --accent-cyan: #00e5ff;
+        --accent-magenta: #ff00e6;
+        --text-primary: #e0e0e0;
+        --text-secondary: #a0a0b0;
+        --border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        background-color: var(--background-dark);
+        color: var(--text-primary);
+        overflow-x: hidden;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      /* App Bar */
+      .app-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 0;
+        animation: slideDown 0.7s ease-out;
+      }
+
+      .logo {
+        font-size: 1.8em;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 25px;
+      }
+
+      .nav-links a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color 0.3s ease;
+        cursor: pointer;
+      }
+
+      .nav-links a:hover {
+        color: var(--accent-cyan);
+      }
+
+      .nav-icons {
+        display: flex;
+        gap: 20px;
+        font-size: 1.2em;
+      }
+
+      .auth-buttons {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .btn-support {
+        background-color: transparent;
+        color: var(--text-secondary);
+      }
+      .btn-support:hover {
+        color: var(--accent-magenta);
+      }
+
+      .btn-login {
+        background-color: transparent;
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+      }
+
+      .btn-login:hover {
+        background-color: var(--primary-dark);
+      }
+
+      .btn-signup {
+        background-color: #fff;
+        color: #000;
+      }
+
+      .btn-signup:hover {
+        opacity: 0.9;
+      }
+
+      @keyframes slideDown {
+        from {
+          transform: translateY(-100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      /* Hero Section */
+      .hero {
+        text-align: center;
+        padding: 100px 0;
+        animation: fadeIn 1s ease-in;
+      }
+
+      .hero-title {
+        font-size: 4.5em;
+        font-weight: 700;
+        background: linear-gradient(
+          90deg,
+          var(--accent-cyan),
+          var(--accent-magenta)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 20px;
+      }
+
+      .hero-subtitle {
+        font-size: 1.2em;
+        color: var(--text-secondary);
+        max-width: 600px;
+        margin: 0 auto 30px;
+      }
+
+      .btn-cta {
+        background: white;
+        color: black;
+        font-size: 1.1em;
+        transform: scale(1);
+      }
+
+      .btn-cta:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      /* Predictor and History Section */
+      .main-content {
+        padding: 50px 0 100px 0; /* Add bottom padding */
+      }
+
+      .grid-container {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 40px;
+        align-items: flex-start;
+      }
+
+      .card {
+        background-color: var(--primary-dark);
+        padding: 30px;
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        animation: fadeInUp 1s ease-out;
+      }
+
+      .card-title {
+        font-size: 1.8em;
+        margin-bottom: 25px;
+      }
+
+      /* Form Styles */
+      label {
+        display: block;
+        margin-top: 15px;
+        margin-bottom: 5px;
+        color: var(--text-secondary);
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 12px;
+        background-color: var(--background-dark);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 1em;
+        font-family: "Poppins", sans-serif;
+      }
+
+      .btn-predict {
+        margin-top: 25px;
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(
+          90deg,
+          var(--accent-cyan),
+          var(--accent-magenta)
+        );
+        color: white;
+        font-size: 1.2em;
+      }
+
+      .btn-predict:hover {
+        box-shadow: 0 0 20px var(--accent-cyan);
+      }
+
+      #result {
+        margin-top: 20px;
+        font-weight: bold;
+        text-align: center;
+        font-size: 1.2em;
+        min-height: 25px;
+      }
+
+      /* History Styles */
+      .history-list {
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .history-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        border-bottom: 1px solid var(--border-color);
+        animation: fadeIn 0.5s;
+      }
+
+      .history-item:last-child {
+        border-bottom: none;
+      }
+
+      .history-details {
+        font-size: 0.9em;
+        color: var(--text-secondary);
+      }
+
+      .history-result {
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-weight: 600;
+      }
+
+      .benign {
+        background-color: rgba(0, 229, 255, 0.2);
+        color: var(--accent-cyan);
+      }
+      .malignant {
+        background-color: rgba(255, 0, 230, 0.2);
+        color: var(--accent-magenta);
+      }
+
+      @keyframes fadeInUp {
+        from {
+          transform: translateY(50px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      /* About Section */
+      .about-section {
+        padding: 100px 0;
+        background-color: var(
+          --secondary-dark
+        ); /* Different background for separation */
+      }
+
+      .section-title {
+        font-size: 2.5em;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .section-text {
+        font-size: 1.1em;
+        line-height: 1.8;
+        color: var(--text-secondary);
+        max-width: 800px;
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      /* Footer Sections */
+      .footer {
+        background-color: var(--primary-dark);
+        padding: 80px 0;
+        border-top: 1px solid var(--border-color);
+      }
+
+      .footer-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: start;
+      }
+
+      .footer-section .section-title {
+        text-align: left;
+      }
+
+      .footer-section .section-text {
+        text-align: left;
+        margin: 0;
+        max-width: 100%;
+      }
+
+      .section-text a {
+        color: var(--accent-cyan);
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s;
+      }
+
+      .section-text a:hover {
+        color: var(--accent-magenta);
+      }
+
+      .donation-form,
+      .contact-form {
+        margin: 20px 0 0;
+        display: flex;
+        gap: 15px;
+      }
+
+      .btn-donate,
+      .btn-contact {
+        background: linear-gradient(
+          90deg,
+          var(--accent-cyan),
+          var(--accent-magenta)
+        );
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="app-bar container">
+      <div class="logo">Predictor</div>
+      <nav class="nav-links">
+        <a href="#predictor">Home</a>
+        <a id="nav-about">About</a>
+        <a id="nav-resources">Resources</a>
+        <div class="nav-icons">
+          <a href="#"><i class="fab fa-facebook-f"></i></a>
+          <a href="#"><i class="fab fa-instagram"></i></a>
+          <a href="#"><i class="fab fa-twitter"></i></a>
+        </div>
+      </nav>
+      <div class="auth-buttons">
+        <button class="btn btn-support">Support</button>
+        <button class="btn btn-login">Log In</button>
+        <button class="btn btn-signup">Sign Up</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1 class="hero-title">Predict. Empower. Inform.</h1>
+        <p class="hero-subtitle">
+          Utilizing advanced machine learning to provide early insights. Input
+          the required medical data below to get an instant prediction.
+        </p>
+        <button
+          class="btn btn-cta"
+          onclick="document.getElementById('predictor').scrollIntoView();"
+        >
+          Get Started
+        </button>
+      </section>
+
+      <section id="predictor" class="main-content container">
+        <div class="grid-container">
+          <div class="card">
+            <h2 class="card-title">Enter Tumor Data</h2>
+            <form id="predictForm">
+              <label>Mean Radius:</label>
+              <input type="number" step="any" id="mean_radius" required />
+              <label>Mean Texture:</label>
+              <input type="number" step="any" id="mean_texture" required />
+              <label>Mean Perimeter:</label>
+              <input type="number" step="any" id="mean_perimeter" required />
+              <label>Mean Area:</label>
+              <input type="number" step="any" id="mean_area" required />
+              <label>Mean Smoothness:</label>
+              <input type="number" step="any" id="mean_smoothness" required />
+              <button type="submit" class="btn btn-predict">Predict</button>
+            </form>
+            <div id="result"></div>
+          </div>
+          <div class="card">
+            <h2 class="card-title">Prediction History</h2>
+            <div id="historyContainer" class="history-list">
+              <p
+                id="noHistory"
+                style="color: var(--text-secondary); text-align: center"
+              >
+                No predictions made in this session yet.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <section id="about" class="about-section">
+      <div class="container">
+        <h2 class="section-title">About This Project</h2>
+        <p class="section-text">
+          This Breast Cancer Predictor is powered by a sophisticated machine
+          learning model trained on the Wisconsin Breast Cancer dataset. It
+          analyzes key features of cell nuclei to classify tumors as either
+          benign or malignant. By leveraging algorithms that can identify
+          complex patterns in data, we provide an instant, data-driven insight
+          to aid medical professionals and researchers. Our goal is to
+          demonstrate the power of AI in early diagnostics and to make this
+          technology more accessible.
+        </p>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container footer-grid">
+        <section id="resources" class="footer-section">
+          <h2 class="section-title">Resources & Donations</h2>
+          <p class="section-text">
+            The model was built using powerful open-source libraries. Learn more
+            about them at
+            <a href="https://scikit-learn.org/" target="_blank">Scikit-learn</a
+            >, <a href="https://pandas.pydata.org/" target="_blank">Pandas</a>,
+            and <a href="https://numpy.org/" target="_blank">NumPy</a>. Your
+            support helps us maintain this service and continue our research.
+          </p>
+          <form class="donation-form">
+            <input type="number" placeholder="Enter amount ($)" min="1" />
+            <button type="submit" class="btn btn-donate">Donate</button>
+          </form>
+        </section>
+
+        <section id="support" class="footer-section">
+          <h2 class="section-title">Contact & Support</h2>
+          <p class="section-text">
+            Have a question or need to report an issue? Reach out to our team.
+          </p>
+          <form class="contact-form">
+            <input type="email" placeholder="Your email address" required />
+            <button type="submit" class="btn btn-contact">Contact Us</button>
+          </form>
+        </section>
+      </div>
+    </footer>
+
+    <script>
+      const predictForm = document.getElementById("predictForm");
+      const resultDiv = document.getElementById("result");
+      const historyContainer = document.getElementById("historyContainer");
+      const noHistoryMsg = document.getElementById("noHistory");
+
+      let predictionHistory =
+        JSON.parse(sessionStorage.getItem("predictionHistory")) || [];
+
+      const renderHistory = () => {
+        if (predictionHistory.length === 0) {
+          noHistoryMsg.style.display = "block";
+          historyContainer.innerHTML = "";
+          historyContainer.appendChild(noHistoryMsg);
+        } else {
+          noHistoryMsg.style.display = "none";
+          historyContainer.innerHTML = "";
+          predictionHistory
+            .slice()
+            .reverse()
+            .forEach((item) => {
+              const historyItem = document.createElement("div");
+              historyItem.className = "history-item";
+              const resultClass =
+                item.prediction === "Malignant" ? "malignant" : "benign";
+              historyItem.innerHTML = `
+                    <div class="history-details">
+                        R: ${item.inputs.mean_radius}, T: ${item.inputs.mean_texture}, P: ${item.inputs.mean_perimeter}
+                    </div>
+                    <div class="history-result ${resultClass}">${item.prediction}</div>
+                `;
+              historyContainer.appendChild(historyItem);
+            });
+        }
+      };
+
+      predictForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const data = {
+          mean_radius: parseFloat(document.getElementById("mean_radius").value),
+          mean_texture: parseFloat(
+            document.getElementById("mean_texture").value
+          ),
+          mean_perimeter: parseFloat(
+            document.getElementById("mean_perimeter").value
+          ),
+          mean_area: parseFloat(document.getElementById("mean_area").value),
+          mean_smoothness: parseFloat(
+            document.getElementById("mean_smoothness").value
+          ),
+        };
+
+        resultDiv.textContent = "⏳ Making prediction...";
+        resultDiv.style.color = "var(--text-secondary)";
+
+        try {
+          const response = await fetch("http://13.60.104.185:8080/predict", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+          const result = await response.json();
+          let predictionText = "";
+
+          if (result.error) {
+            resultDiv.textContent = "❌ Error: " + result.error;
+            resultDiv.style.color = "red";
+          } else {
+            predictionText = result.prediction === 1 ? "Malignant" : "Benign";
+            resultDiv.textContent = `Prediction: ${predictionText}`;
+            resultDiv.style.color =
+              result.prediction === 1
+                ? "var(--accent-magenta)"
+                : "var(--accent-cyan)";
+
+            predictionHistory.push({
+              inputs: data,
+              prediction: predictionText,
+            });
+            sessionStorage.setItem(
+              "predictionHistory",
+              JSON.stringify(predictionHistory)
+            );
+            renderHistory();
+          }
+        } catch (error) {
+          resultDiv.textContent = "⚠️ Failed to connect to server.";
+          resultDiv.style.color = "#ffff00";
+          console.error(error);
+        }
+      });
+
+      // Initial render
+      renderHistory();
+
+      // Smooth scroll navigation
+      document.getElementById("nav-about").addEventListener("click", () => {
+        document.getElementById("about").scrollIntoView();
+      });
+      document.getElementById("nav-resources").addEventListener("click", () => {
+        document.getElementById("resources").scrollIntoView();
+      });
+      document.querySelector(".btn-support").addEventListener("click", () => {
+        document.getElementById("support").scrollIntoView();
+      });
+    </script>
+  </body>
+</html>

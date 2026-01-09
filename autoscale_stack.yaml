@@ -1,0 +1,203 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Simple stack — LaunchTemplate + AutoScalingGroup + SNS + CloudWatch alarm + S3-triggered Lambda
+
+Parameters:
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Existing EC2 KeyPair for SSH access
+  InstanceType:
+    Type: String
+    Default: t4g.micro
+  AmiId:
+    Type: AWS::EC2::Image::Id
+    Description: Ubuntu/AMI id in this region
+  S3Bucket:
+    Type: String
+    Description: Bucket name that contains your app (app.zip or files + model)
+  BootstrapScriptS3Key:
+    Type: String
+    Default: user-data/bootstrap.sh
+    Description: S3 key containing bootstrap user-data script
+
+Resources:
+  ## IAM role for EC2 (allow S3 GetObject & CloudWatch logs)
+  EC2InstanceProfileRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ec2.amazonaws.com]
+            Action: sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+      Policies:
+        - PolicyName: S3ReadModel
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource:
+                  - !Sub arn:aws:s3:::${S3Bucket}/*
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref EC2InstanceProfileRole]
+      Path: /
+
+  ## Security Group for ASG instances (allow HTTP 8080 and SSH)
+  AppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow 22 and 8080
+      VpcId: vpc-06c5535eb4854d3d4
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+
+  ## Launch Template (user-data pulls bootstrap script from S3 and runs)
+  MyLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: !Sub "${AWS::StackName}-lt"
+      LaunchTemplateData:
+        InstanceType: !Ref InstanceType
+        ImageId: !Ref AmiId
+        KeyName: !Ref KeyName
+        IamInstanceProfile:
+          Arn: !GetAtt EC2InstanceProfile.Arn
+        SecurityGroupIds:
+          - !Ref AppSecurityGroup
+        UserData: !Base64 |
+          #!/bin/bash -xe
+          # Install needed deps and run provided bootstrap from S3
+          apt-get update -y
+          apt-get install -y awscli python3 python3-venv python3-pip
+          mkdir -p /opt/myapp
+          aws s3 cp s3://${S3Bucket}/${BootstrapScriptS3Key} /tmp/bootstrap.sh || exit 0
+          chmod +x /tmp/bootstrap.sh
+          /tmp/bootstrap.sh ${S3Bucket} || true
+          # start systemd service if bootstrap installs it
+  ## AutoScaling Group
+  MyAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      LaunchTemplate:
+        LaunchTemplateId: !Ref MyLaunchTemplate
+        Version: !GetAtt MyLaunchTemplate.LatestVersionNumber
+      MinSize: "1"
+      MaxSize: "3"
+      DesiredCapacity: "1"
+      VPCZoneIdentifier:
+        - subnet-0722bf49d324934ba
+        - subnet-0236cf7c369147183
+        - subnet-033b305168150b119
+    Metadata:
+      Comment: "You might need to set VPCZoneIdentifier to subnet IDs for non-default VPCs."
+
+  ## SNS Topic for alarms/notifications
+  AlarmTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: !Sub "${AWS::StackName}-alerts"
+      Subscription:
+        - Protocol: email
+          Endpoint: "adityavasudev.k2023@vitstudent.ac.in"
+
+  ## CloudWatch alarm on ASG instances (aggregated) — here we use CPU on EC2 (simpler)
+  HighCPUAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-HighCPU"
+      AlarmDescription: "Alarm if average CPU > 60% for 2 datapoints"
+      Namespace: "AWS/EC2"
+      MetricName: CPUUtilization
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value: !Ref MyAutoScalingGroup
+      Statistic: Average
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 60.0
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !Ref AlarmTopic
+
+  ## Lambda role
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3ReadPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !Ref AlarmTopic
+
+  ## Lambda function triggered by S3 PutObject (not wired here; add notification in S3 console or via template)
+  ModelUploadLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-model-upload"
+      Handler: index.handler
+      Runtime: python3.11
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+
+          sns = boto3.client('sns')
+          def handler(event, context):
+              # event is S3 PutObject notification
+              try:
+                  bucket = event['Records'][0]['s3']['bucket']['name']
+                  key = event['Records'][0]['s3']['object']['key']
+                  msg = f"New model uploaded: s3://{bucket}/{key}"
+                  print(msg)
+                  sns.publish(TopicArn=os.environ['ALARM_TOPIC_ARN'], Message=msg, Subject="Model Uploaded")
+              except Exception as e:
+                  print("Error in lambda:", e)
+                  raise
+
+      Environment:
+        Variables:
+          ALARM_TOPIC_ARN: !Ref AlarmTopic
+
+Outputs:
+  SNSTopic:
+    Description: SNS topic ARN
+    Value: !Ref AlarmTopic
+  ASGName:
+    Description: AutoScalingGroup name
+    Value: !Ref MyAutoScalingGroup
